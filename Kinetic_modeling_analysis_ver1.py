@@ -7,6 +7,8 @@ import time
 import pandas as pd
 from functools import reduce
 from collections import Counter
+from Functions import kinmod_func
+
 
 def func_rs(d_o):
     return -26.35*d_o + .69995
@@ -237,7 +239,12 @@ data_filt = data_filt[data_filt['Mixing Tube Diameter'] == .03]
 #data_filt = data_filt[data_filt['Pressure'] == 60]
 data_filt = data_filt[data_filt['Actual Abrasive'] < 3]
 
-mt_count = Counter(data_filt['Mixing Tube Diameter']).keys()
+counts = [Counter(data_filt['Mixing Tube Diameter']).keys(),
+          Counter(data_filt['Orifice']).keys(),
+          Counter(data_filt['Material']).keys(),
+          Counter(data_filt['Pressure']).keys(),
+          Counter(data_filt['Thickness']).keys(),
+          ]
 
 
 
@@ -254,7 +261,6 @@ for i in range(0,size_y,1):
 save = np.array(save)
 
 s_0m, s_0b, r_sm, r_sb = optimize_all([save[:,0], save[:,1], save[:,2], save[:,3], save[:,4], save[:,5]])
-# s_0m = -517.3766171567418; s_0b = 16.02015432214605; r_sm = -26.65905483540429; r_sb = 0.700583705822331;
 
 err_ind = (save[:, 4] / kin_equ(save[:,0],save[:,1],save[:,2],save[:,3],r_sm*save[:,5]+r_sb,s_0m*save[:,5]+s_0b))-1
 
@@ -265,125 +271,14 @@ ax.set_xlabel('Abrasive Loading (R)')
 ax.set_ylabel('Error')
 ax.yaxis.set_major_formatter(mp.ticker.PercentFormatter())
 
-# plt.figure()
-# for i in range(1,ind['Sorting']+1,1):
-#     #separate each test
-#     data  = data_sep.loc[data_sep["Sorting"] == i]
-#     data.reset_index(drop=True, inplace=True)
-
-#     #set parameters 
-#     d_o = data['Orifice'].iloc[0]   #orifice diamter 
-#     p = data["Pressure"].iloc[0]    #Pressure
-#     mt = float(data['Mixing Tube Diameter'].iloc[0])   #mixing tube diameter
-#     mat = data['Material'].iloc[0]  #material type
-#     mat_t = data['Thickness'].iloc[0] #material thickness
-#     afr = data['Actual Abrasive'].values    #abrasive feed rate
-#     sep = data['Experimental Separation'].values    #separation speed
-
-#     #calcuated parameters
-#     wfr = water_flow_meas(d_o,p)    #Water flow rate
-#     p_h = hyd_pow(d_o,p)    #hydraulic power
-#     alr = afr/wfr   #Find abrasive loading
-
-# #===================================================================================================   
-#     #optimize scaling constant S_0 and R_s for the test. This functions optimizes using both parameters.
-#     optim_s0rs = optimize_s0rs([psi_max[str(mt)], r_0[str(mt)], p_h, alr, sep])
-#     #find kin model separaiton speeds with optimized S_0 and R_s
-#     v_sepmod_s0rs = kin_equ(psi_max[str(mt)], r_0[str(mt)], p_h, r, optim_s0rs[1], optim_s0rs[0])
-#     #calculate error between model and measured data.
-#     error_s0rs = np.abs(np.sum(kin_equ(psi_max[str(mt)],r_0[str(mt)],p_h, alr,optim_s0rs[1],optim_s0rs[0])/sep-1))/len(alr)
-# #===================================================================================================
-#     s0_const = func_S0(d_o,mat,mat_t)
-#     #optimize scaling constant R_s while keeping S_0 constant.
-#     optim_rs = optimize_rs([psi_max[str(mt)], r_0[str(mt)], s0_const, p_h, alr, sep])
-#     #find kin model separation speeds with optimized R_s
-#     v_sepmod_rs = kin_equ(psi_max[str(mt)], r_0[str(mt)], p_h, r, optim_rs[0], s0_const)
-#     #calculated error between model and measured data.
-#     error_rs = np.abs(np.sum(kin_equ(psi_max[str(mt)],r_0[str(mt)],p_h, alr,optim_rs[0],s0_const)/sep-1))/len(alr)
-# #===================================================================================================
-#     rs_const = func_rs(d_o)
-#     optim_s0 =  optimize_s0([psi_max[str(mt)], r_0[str(mt)], rs_const, p_h, alr, sep])
-#     #calcuated separation speed using R_s function optimiizing s_0 
-#     v_sepmod_s0 = kin_equ(psi_max[str(mt)],r_0[str(mt)], p_h, r, rs_const, optim_s0[0])
-#     error_s0 = np.abs(np.sum(kin_equ(psi_max[str(mt)],r_0[str(mt)],p_h, alr,rs_const,optim_s0[0])/sep-1))/len(alr)
-# #===================================================================================================
-#     #Calculated separation speed using constant S_0 and a R_s function
-#     v_sepmod_const = kin_equ(psi_max[str(mt)],r_0[str(mt)], p_h, r, rs_const, s0_const)
-#     #calculate error
-#     error_const = np.abs(np.sum(kin_equ(psi_max[str(mt)],r_0[str(mt)], p_h, alr, rs_const, s0_const)/sep-1))/len(alr)
-# #===================================================================================================
-#     #Calculate separation speed using mass calculation of S_0 and R_s
-#     v_sepmod_all = kin_equ(psi_max[str(mt)], r_0[str(mt)], p_h, r, r_sm*d_o+r_sb, s_0m*d_o+s_0b)
-#     #calcualted error between mass calculation and measured data.
-#     error_all = np.abs(np.sum(kin_equ(psi_max[str(mt)], r_0[str(mt)], p_h, alr, r_sm*d_o+r_sb, s_0m*d_o+s_0b)/sep-1))/len(alr)
-
-#     #label data set
-#     lab = 'Label: {0}, {1}, {2}, {3}, {4}, {5}'.format(data["Material"].iloc[0],data["Thickness"].iloc[0],data["Nozzle"].iloc[0], data["Pressure"].iloc[0],data["Orifice"].iloc[0],data["Mixing Tube Diameter"].iloc[0])
-    
-#     go = 1
-#     if mat =='Aluminum 6061' and str(mt) == '0.03' and mat_t == 1 and d_o == .01: #go == 1: #
-#         #save parameters:
-#         print(d_o)
-#         s0_calc.append(s0_const)
-#         lab_save.append(lab)
-#         hp_save.append(float(p_h))
-#         mt_save.append(float(mt))
-#         do_save.append(float(d_o))
-#         p_save.append(p)
-#         mat_save.append(str(data['Material'].iloc[0]))
-#         mat_t_save.append(str(data['Thickness'].iloc[0]))
-#         alr_save.append(alr)
-
-#         #save model constants:
-#         s0.append(float(optim_s0rs[0]))
-#         rs.append(float(optim_s0rs[1]))
-#         rs_const_s0.append(optim_rs[0])
-#         s0_func_rs.append(optim_s0[0])
-        
-#         #save error 
-#         err_s0rs.append(error_s0rs)
-#         err_rs.append(error_rs)
-#         err_s0.append(error_s0)
-#         err_const.append(error_const)
-#         err_all.append(error_all)
-
-#         plt.scatter(alr,sep, label = lab)
-#         plt.plot(r,v_sepmod_all)
-# plt.title('Model vs Measured')
-# plt.xlabel('Abrasive Loading')
-# plt.ylabel( 'Separation Speed (ipm)')
-#plt.legend()   
-
 print('S_0 Slope: {0}, S_0 Intercept: {1}, R_s slope: {2}, R_s Intercept: {3}'.format(s_0m, s_0b, r_sm, r_sb))
 
-# plt.figure()
-# plt.title('Scaling Vs Hydraulic Power')
-# #plt.scatter(np.array(hp_save), np.array(s0))
-# plt.scatter(np.array(do_save),np.array(rs_const_s0))
-# plt.plot(o,s_0)
-# # plt.scatter(np.array(p_save),np.array(s0_calc))
-# plt.xlabel('Pressure (ksi)')
-# plt.ylabel('Scaling')
-
-# plt.figure()
-# plt.title('Shifting vs Hydraulic Power')
-# plt.scatter(np.array(p_save), np.array(rs))
-# #plt.scatter(np.array(hp_save), np.array(rs_const_s0))
-# plt.xlabel('Pressure (ksi)')
-# plt.ylabel('R_s')
 
 plt.figure()
 plt.title('Error vs Hydraulic Power')
 plt.scatter(np.array(p_save),np.array(err_all))
 plt.xlabel('hydraulic power (hp)')
 plt.ylabel('Error')
-
-# plt.figure()
-# plt.title('Error Histogram')
-# n, bins, patches = plt.hist(x=np.array(err_s0rs), bins='auto', color='#0504aa',
-#                             alpha=0.7, rwidth=0.85)
-
-
 
 #save to excel
 file_name = 'Kinetic Cutting Model Results'
@@ -409,16 +304,5 @@ workbook = writer.book
 writer.close()
 
 
-
-
-
-# r = np.linspace(0,1,1000);
-# psi = psi_max['0.03']
-# r_zero = r_0['0.03']
-# plt.figure()
-# plt.plot(r,kin_equ(psi,r_zero,30,r,.4,10),label = 'baseline',color ='blue')
-# plt.plot(r,kin_equ(psi,r_zero,30,r,.5,10),label = 'r_s change',color ='orange')
-# plt.plot(r,kin_equ(psi,r_zero,30,r,.5,12),label = 'r_s  change',color ='orange')
-# plt.legend()
 
 # %%
