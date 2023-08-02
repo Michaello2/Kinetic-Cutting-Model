@@ -7,7 +7,7 @@ import time
 import pandas as pd
 from functools import reduce
 from collections import Counter
-from Functions import kinmod_func
+import Functions 
 
 
 def func_rs(d_o):
@@ -29,7 +29,7 @@ def machine_num(mat):
 
 def func_S0(d_o,mat,mat_t):
     mn = machine_num(mat)
-    return (-487.24*d_o+15.694) #(10.36*mat_t**-1.25)/(10.36*(1)**-1.25)*(mn/219)*
+    return (-487.24*d_o+15.694)*(10.36*mat_t**-1.25)/(10.36*(1)**-1.25)*(mn/219)
 
 def kin_equ(psi_max, r_0, p_h, r, r_s, s_0 ):
     v_sep = (p_h*s_0 /r_s)*r*((psi_max)/(1+(r/(r_0*r_s))))**2
@@ -238,6 +238,7 @@ data_filt = data_filt[data_filt['Mixing Tube Diameter'] == .03]
 # data_filt = data_filt[data_filt['Orifice'] == .01]
 #data_filt = data_filt[data_filt['Pressure'] == 60]
 data_filt = data_filt[data_filt['Actual Abrasive'] < 3]
+data_filt = data_filt[data_filt['Experimental Separation'] < 500]
 
 counts = [Counter(data_filt['Mixing Tube Diameter']).keys(),
           Counter(data_filt['Orifice']).keys(),
@@ -265,11 +266,11 @@ s_0m, s_0b, r_sm, r_sb = optimize_all([save[:,0], save[:,1], save[:,2], save[:,3
 err_ind = (save[:, 4] / kin_equ(save[:,0],save[:,1],save[:,2],save[:,3],r_sm*save[:,5]+r_sb,s_0m*save[:,5]+s_0b))-1
 
 ax = plt.subplot()
-ax.scatter(save[:,3],err_ind*100)
+ax.scatter(save[:,3],save[:,4])
 ax.set_title('Error Vs Abrasive Feed Rate')
 ax.set_xlabel('Abrasive Loading (R)')
 ax.set_ylabel('Error')
-ax.yaxis.set_major_formatter(mp.ticker.PercentFormatter())
+#ax.yaxis.set_major_formatter(mp.ticker.PercentFormatter())
 
 print('S_0 Slope: {0}, S_0 Intercept: {1}, R_s slope: {2}, R_s Intercept: {3}'.format(s_0m, s_0b, r_sm, r_sb))
 
