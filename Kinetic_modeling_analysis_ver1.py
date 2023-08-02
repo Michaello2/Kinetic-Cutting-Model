@@ -2,12 +2,8 @@
 import numpy as np
 import scipy as sp
 import matplotlib.pyplot as plt
-import matplotlib as mp
-import time
 import pandas as pd
-from functools import reduce
 from collections import Counter
-import Functions 
 
 
 def func_rs(d_o):
@@ -194,6 +190,19 @@ data_sep.columns = ['Date',
 ind = data_sep.loc[data_sep['Sorting'].idxmax()]
 r = np.linspace(0,1,100)
 
+psi_max = {
+    '0.03': .696,
+    '0.036': .707,
+    '0.042': .661,
+    '0.048': .684
+    }
+r_0 = {
+    '0.03': .632,
+    '0.036': .799,
+    '0.042': 1.08,
+    '0.048': 1.03
+    }
+
 #kinetic model constants
 s0 = [];
 rs = [];
@@ -218,22 +227,12 @@ err_s0 = [];
 err_const = []; 
 err_all = [];
 
-psi_max = {
-    '0.03': .696,
-    '0.036': .707,
-    '0.042': .661,
-    '0.048': .684
-    }
-r_0 = {
-    '0.03': .632,
-    '0.036': .799,
-    '0.042': 1.08,
-    '0.048': 1.03
-    }
 
 #Linear optimization of the entiredata set.
 data_filt = data_sep[data_sep['Material'] == 'Aluminum 6061']
-# data_filt = data_filt[data_filt['Thickness'] == 1]
+data_filt = data_filt[data_filt['Thickness'] < 1.2]
+data_filt = data_filt[data_filt['Thickness'] > .97]
+
 data_filt = data_filt[data_filt['Mixing Tube Diameter'] == .03]
 # data_filt = data_filt[data_filt['Orifice'] == .01]
 #data_filt = data_filt[data_filt['Pressure'] == 60]
@@ -247,10 +246,9 @@ counts = [Counter(data_filt['Mixing Tube Diameter']).keys(),
           Counter(data_filt['Thickness']).keys(),
           ]
 
-
-
 size_y, size_x = data_filt.shape
 save = [];
+
 for i in range(0,size_y,1):
     save.append([psi_max[str(data_filt['Mixing Tube Diameter'].iloc[i])],
                 r_0[str(data_filt['Mixing Tube Diameter'].iloc[i])],
@@ -270,7 +268,7 @@ ax.scatter(save[:,3],save[:,4])
 ax.set_title('Error Vs Abrasive Feed Rate')
 ax.set_xlabel('Abrasive Loading (R)')
 ax.set_ylabel('Error')
-#ax.yaxis.set_major_formatter(mp.ticker.PercentFormatter())
+
 
 print('S_0 Slope: {0}, S_0 Intercept: {1}, R_s slope: {2}, R_s Intercept: {3}'.format(s_0m, s_0b, r_sm, r_sb))
 
