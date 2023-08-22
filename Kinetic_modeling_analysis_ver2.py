@@ -101,7 +101,7 @@ def optimize_all(vals):
     optim_all = sp.optimize.fmin(func = opt_all, x0 = guess, args = (inp,))
     return optim_all
 
-file_name = 'test_separation.xlsx'
+file_name = 'separation_data.xlsx'
 my_path = r'J:\Engineering\private\_Staff\Michael Lo\VS Code\Python Code' + '\\' + file_name;
 data_sep = pd.read_excel(io = my_path, sheet_name = 'Sheet1')
 data_sep.columns = ['Date',
@@ -138,7 +138,7 @@ data_sep = data_sep.sort_values(by = ['Material','Thickness','Mixing Tube Diamet
 data_filt = data_sep[data_sep['Material'] == 'Aluminum 6061']
 data_filt = data_filt[data_filt['Experimental Separation'] < 500]
 data_filt = data_filt[data_filt['Actual Abrasive'] < 5]
-data_filt = data_filt[data_filt['Pressure'] < 57]
+#data_filt = data_filt[data_filt['Pressure'] < 57]
 data_filt = data_filt[data_filt['Thickness'] < 1.25]
 data_filt = data_filt[data_filt['Thickness'] > .9]
 data_filt = data_filt[data_filt['Mixing Tube Diameter'] == .030]
